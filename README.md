@@ -114,7 +114,7 @@ For support, feature requests, or bug reports, please visit our [support page](h
 
 ## 👨‍💻 Credits
 
-Developed by **Mikko Heikklä** for [CodeMic](https://codemic.fi/). Built with security and performance in mind, following WordPress coding standards and best practices.
+Developed by **Mikko Heikklä** [Codemic](https://codemic.fi/). Built with security and performance in mind, following WordPress coding standards and best practices.
 
 ## 📄 License
 
