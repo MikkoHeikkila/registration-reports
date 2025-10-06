@@ -1,6 +1,6 @@
 === Registration Reports ===
 Contributors: mikkoheikkila
-Donate link: https://www.adventureclub.io/
+Donate link: https://codemic.fi/
 Tags: users, reports, registration, admin, subscriber, membership
 Requires at least: 5.0
 Tested up to: 6.4
