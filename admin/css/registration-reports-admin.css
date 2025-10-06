@@ -1,0 +1,41 @@
+/**
+ * All of the CSS for your admin-specific functionality should be
+ * included in this file.
+ */
+
+/* Frozen status toggle styles */
+.frozen-toggle {
+	transition: all 0.2s ease;
+}
+
+.frozen-toggle:hover {
+	opacity: 0.8;
+	text-decoration: none !important;
+}
+
+.frozen-toggle.processing {
+	opacity: 0.5;
+	cursor: not-allowed !important;
+}
+
+/* Success/Error notices */
+.registration-reports-notice {
+	margin: 15px 0;
+	animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+	from {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Results table improvements */
+.wp-list-table .frozen-toggle {
+	font-weight: 500;
+}
