@@ -1,7 +1,4 @@
-=== Registration Reports ===
-Contributors: mikkoheikkila
-Donate link: https://codemic.fi/
-Tags: users, reports, registration, admin, subscriber, membership
+### Registration Reports
 Requires at least: 5.0
 Tested up to: 6.4
 Requires PHP: 7.4
