@@ -3,6 +3,41 @@
  * included in this file.
  */
 
+/* Tab Navigation Styles */
+.nav-tab-wrapper {
+	border-bottom: 1px solid #ccc;
+	margin: 20px 0 0 0;
+	padding: 0;
+}
+
+.tab-content {
+	background: #fff;
+	padding: 20px;
+	border: 1px solid #ccc;
+	border-top: none;
+}
+
+/* Unfreeze Button Styles */
+.unfreeze-user {
+	background: #2271b1;
+	color: #fff;
+	border-color: #2271b1;
+	transition: all 0.2s ease;
+}
+
+.unfreeze-user:hover {
+	background: #135e96;
+	border-color: #135e96;
+	color: #fff;
+}
+
+.unfreeze-user:disabled {
+	background: #ccc !important;
+	border-color: #ccc !important;
+	color: #666 !important;
+	cursor: not-allowed;
+}
+
 /* Frozen status toggle styles */
 .frozen-toggle {
 	transition: all 0.2s ease;

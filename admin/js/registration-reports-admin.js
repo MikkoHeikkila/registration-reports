@@ -8,7 +8,7 @@
 
 	$(document).ready(function() {
 		
-		// Handle frozen status toggle clicks
+		// Handle frozen status toggle clicks (for registrations tab)
 		$(document).on('click', '.frozen-toggle', function(e) {
 			e.preventDefault();
 			
@@ -36,19 +36,15 @@
 				},
 				success: function(response) {
 					if (response.success) {
-						// Update the display
-						var newStatus = response.data.is_frozen;
-						var newText = newStatus ? 'Yes' : 'No';
-						var newColor = newStatus ? '#d63638' : '#00a32a';
-						
-						$toggle.text(newText);
-						$toggle.css('color', newColor);
-						$toggle.data('current-status', newStatus ? '1' : '0');
-						
-						// Show success message
+						// Show success message and reload page to show updated frozen_at timestamp
 						if (typeof response.data.message !== 'undefined') {
 							showNotice(response.data.message, 'success');
 						}
+						
+						// Reload the page after a short delay to show the notice
+						setTimeout(function() {
+							location.reload();
+						}, 1000);
 					} else {
 						// Show error message
 						var errorMsg = 'Failed to update user status.';
@@ -72,6 +68,66 @@
 				},
 				complete: function() {
 					$toggle.removeClass('processing');
+				}
+			});
+		});
+		
+		// Handle unfreeze button clicks (for inquiries tab)
+		$(document).on('click', '.unfreeze-user', function(e) {
+			e.preventDefault();
+			
+			var $button = $(this);
+			var userId = $button.data('user-id');
+			var nonce = $button.data('nonce');
+			
+			// Prevent multiple clicks while processing
+			if ($button.prop('disabled')) {
+				return;
+			}
+			
+			$button.prop('disabled', true);
+			$button.text('Processing...');
+			
+			// Make AJAX request to unfreeze the user
+			$.ajax({
+				url: ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'toggle_user_frozen',
+					user_id: userId,
+					nonce: nonce
+				},
+				success: function(response) {
+					if (response.success) {
+						// Show success message and reload page
+						if (typeof response.data.message !== 'undefined') {
+							showNotice(response.data.message, 'success');
+						}
+						
+						// Reload the page after a short delay to show the notice
+						setTimeout(function() {
+							location.reload();
+						}, 1000);
+					} else {
+						// Show error message
+						var errorMsg = 'Failed to unfreeze user.';
+						if (typeof response.data !== 'undefined' && typeof response.data.message !== 'undefined') {
+							errorMsg = response.data.message;
+						}
+						showNotice(errorMsg, 'error');
+						
+						// Re-enable button
+						$button.prop('disabled', false);
+						$button.text('Unfreeze');
+					}
+				},
+				error: function() {
+					// Show error message
+					showNotice('An error occurred while unfreezing the user.', 'error');
+					
+					// Re-enable button
+					$button.prop('disabled', false);
+					$button.text('Unfreeze');
 				}
 			});
 		});

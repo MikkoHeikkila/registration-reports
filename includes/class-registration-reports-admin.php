@@ -118,29 +118,65 @@ class Registration_Reports_Admin {
 		}
 
 		$form_action = admin_url( 'users.php?page=' . $this->page_slug );
+		$active_tab = sanitize_text_field( $_GET['tab'] ?? 'registrations' );
+		
+		// Validate tab
+		if ( ! in_array( $active_tab, array( 'registrations', 'inquiries' ), true ) ) {
+			$active_tab = 'registrations';
+		}
+
 		$params = $this->read_params();
 		$errors = array();
 		$results = array();
 		$has_query = false;
 
-		// Process form submission if params are present
-		if ( $params['has_query'] ) {
-			// Verify nonce
-			if ( ! wp_verify_nonce( $_GET['_wpnonce'] ?? '', $this->nonce_action ) ) {
-				$errors[] = __( 'Security check failed. Please try again.', 'registration-reports' );
-			} else {
-				// Validate dates
-				if ( empty( $params['start_date'] ) || empty( $params['end_date'] ) ) {
-					$errors[] = __( 'Please provide both start and end dates.', 'registration-reports' );
-				} elseif ( ! $params['start_dt'] || ! $params['end_dt'] ) {
-					$errors[] = __( 'Please provide valid dates.', 'registration-reports' );
+		// Process form submission based on active tab
+		if ( $active_tab === 'registrations' ) {
+			// Process registrations tab
+			if ( $params['has_query'] ) {
+				// Verify nonce
+				if ( ! wp_verify_nonce( $_GET['_wpnonce'] ?? '', $this->nonce_action ) ) {
+					$errors[] = __( 'Security check failed. Please try again.', 'registration-reports' );
+				} else {
+					// Validate dates
+					if ( empty( $params['start_date'] ) || empty( $params['end_date'] ) ) {
+						$errors[] = __( 'Please provide both start and end dates.', 'registration-reports' );
+					} elseif ( ! $params['start_dt'] || ! $params['end_dt'] ) {
+						$errors[] = __( 'Please provide valid dates.', 'registration-reports' );
+					} else {
+						$has_query = true;
+						
+						if ( $params['mode'] === 'new' ) {
+							$results = $this->query_new( $params['start_dt'], $params['end_dt'], wp_timezone() );
+						} elseif ( $params['mode'] === 'anniversary' ) {
+							$results = $this->query_anniversaries( $params['start_dt'], $params['end_dt'], wp_timezone() );
+						}
+					}
+				}
+			}
+		} elseif ( $active_tab === 'inquiries' ) {
+			// Process inquiries tab
+			$show_all = isset( $_GET['show_all'] );
+			
+			if ( $show_all || $params['has_query'] ) {
+				// Verify nonce
+				if ( ! wp_verify_nonce( $_GET['_wpnonce'] ?? '', $this->nonce_action ) ) {
+					$errors[] = __( 'Security check failed. Please try again.', 'registration-reports' );
 				} else {
 					$has_query = true;
 					
-					if ( $params['mode'] === 'new' ) {
-						$results = $this->query_new( $params['start_dt'], $params['end_dt'], wp_timezone() );
-					} elseif ( $params['mode'] === 'anniversary' ) {
-						$results = $this->query_anniversaries( $params['start_dt'], $params['end_dt'], wp_timezone() );
+					if ( $show_all ) {
+						// Show all users with review inquiries
+						$results = $this->query_review_inquiries( null, null, wp_timezone() );
+					} else {
+						// Filter by date range
+						if ( empty( $params['start_date'] ) || empty( $params['end_date'] ) ) {
+							$errors[] = __( 'Please provide both start and end dates.', 'registration-reports' );
+						} elseif ( ! $params['start_dt'] || ! $params['end_dt'] ) {
+							$errors[] = __( 'Please provide valid dates.', 'registration-reports' );
+						} else {
+							$results = $this->query_review_inquiries( $params['start_dt'], $params['end_dt'], wp_timezone() );
+						}
 					}
 				}
 			}
@@ -271,6 +307,7 @@ class Registration_Reports_Admin {
 				'user_registered' => $user->user_registered,
 				'years_since' => null,
 				'is_frozen' => get_field( 'is_frozen', 'user_' . $user->ID ),
+				'frozen_at' => get_field( 'frozen_at', 'user_' . $user->ID ),
 			);
 		}
 
@@ -327,6 +364,7 @@ class Registration_Reports_Admin {
 					'user_registered' => $user->user_registered,
 					'years_since' => $years_since,
 					'is_frozen' => get_field( 'is_frozen', 'user_' . $user->ID ),
+					'frozen_at' => get_field( 'frozen_at', 'user_' . $user->ID ),
 				);
 			}
 		}
@@ -383,6 +421,73 @@ class Registration_Reports_Admin {
 	}
 
 	/**
+	 * Query users with review inquiries within date range.
+	 *
+	 * @since    1.0.0
+	 * @param    DateTimeImmutable|null    $start_dt    Start date in site timezone (optional)
+	 * @param    DateTimeImmutable|null    $end_dt      End date in site timezone (optional)
+	 * @param    DateTimeZone              $site_tz     Site timezone
+	 * @return   array                                  Array of user rows
+	 */
+	private function query_review_inquiries( $start_dt, $end_dt, $site_tz ) {
+		// Get all subscribers
+		$args = array(
+			'role' => 'subscriber',
+			'number' => -1,
+			'fields' => array( 'ID', 'user_login', 'user_email' ),
+		);
+
+		$user_query = new WP_User_Query( $args );
+		$users = $user_query->get_results();
+
+		$results = array();
+		foreach ( $users as $user ) {
+			// Check if user has review_inquiry set to true
+			$review_inquiry = get_field( 'review_inquiry', 'user_' . $user->ID );
+			
+			if ( ! $review_inquiry ) {
+				continue;
+			}
+
+			$review_inquiry_at = get_field( 'review_inquiry_at', 'user_' . $user->ID );
+			
+			// If date range is specified, filter by review_inquiry_at
+			if ( $start_dt && $end_dt && ! empty( $review_inquiry_at ) ) {
+				try {
+					$inquiry_dt = new DateTimeImmutable( $review_inquiry_at, $site_tz );
+					
+					// Skip if inquiry date is outside the range
+					if ( $inquiry_dt < $start_dt || $inquiry_dt > $end_dt ) {
+						continue;
+					}
+				} catch ( Exception $e ) {
+					// Skip if date is invalid
+					continue;
+				}
+			}
+
+			$results[] = array(
+				'user_id' => $user->ID,
+				'user_login' => $user->user_login,
+				'user_email' => $user->user_email,
+				'membership_number' => get_user_meta( $user->ID, 'membership_number', true ),
+				'review_inquiry_at' => $review_inquiry_at,
+				'is_frozen' => get_field( 'is_frozen', 'user_' . $user->ID ),
+				'frozen_at' => get_field( 'frozen_at', 'user_' . $user->ID ),
+			);
+		}
+
+		// Sort by review_inquiry_at descending (most recent first)
+		usort( $results, function( $a, $b ) {
+			$time_a = strtotime( $a['review_inquiry_at'] ?? '1970-01-01' );
+			$time_b = strtotime( $b['review_inquiry_at'] ?? '1970-01-01' );
+			return $time_b - $time_a;
+		});
+
+		return $results;
+	}
+
+	/**
 	 * Handle AJAX request to toggle user frozen status.
 	 *
 	 * @since    1.0.0
@@ -419,6 +524,16 @@ class Registration_Reports_Admin {
 
 		// Update the ACF field
 		$updated = update_field( 'is_frozen', $new_frozen, 'user_' . $user_id );
+
+		// Update frozen_at timestamp
+		if ( $new_frozen ) {
+			// User is being frozen - set current timestamp
+			$frozen_at = current_time( 'Y-m-d H:i:s' );
+			update_field( 'frozen_at', $frozen_at, 'user_' . $user_id );
+		} else {
+			// User is being unfrozen - clear the timestamp
+			update_field( 'frozen_at', '', 'user_' . $user_id );
+		}
 
 		if ( $updated ) {
 			wp_send_json_success( array(
