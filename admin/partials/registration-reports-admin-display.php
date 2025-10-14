@@ -30,6 +30,9 @@ $active_tab = $active_tab ?? 'registrations';
 <div class="wrap">
 	<h1><?php echo esc_html( $page_title ); ?></h1>
 
+	<!-- Notice Container -->
+	<div id="rr-notice-container"></div>
+
 	<!-- Tab Navigation -->
 	<nav class="nav-tab-wrapper">
 		<a href="<?php echo esc_url( admin_url( 'users.php?page=cdmc-registration-reports&tab=registrations' ) ); ?>" 

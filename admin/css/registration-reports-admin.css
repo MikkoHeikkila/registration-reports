@@ -53,7 +53,43 @@
 	cursor: not-allowed !important;
 }
 
-/* Success/Error notices */
+/* Notice container */
+#rr-notice-container {
+	margin-top: 15px;
+	min-height: 0;
+	position: relative;
+}
+
+#rr-notice-container:empty {
+	margin-top: 0;
+	display: block;
+}
+
+/* Custom notices (styled like WordPress notices but won't be moved by WP scripts) */
+.rr-notice {
+	background: #fff;
+	border-left: 4px solid;
+	box-shadow: 0 1px 1px rgba(0,0,0,.04);
+	margin: 5px 0 15px;
+	padding: 12px;
+	position: relative;
+	animation: slideDown 0.3s ease;
+}
+
+.rr-notice p {
+	margin: 0.5em 0;
+	padding: 2px;
+}
+
+.rr-notice-success {
+	border-left-color: #00a32a;
+}
+
+.rr-notice-error {
+	border-left-color: #d63638;
+}
+
+/* Legacy support */
 .registration-reports-notice {
 	margin: 15px 0;
 	animation: slideDown 0.3s ease;

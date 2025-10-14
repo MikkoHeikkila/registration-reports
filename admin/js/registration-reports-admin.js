@@ -132,25 +132,25 @@
 			});
 		});
 		
-		// Function to show notices
-		function showNotice(message, type) {
-			// Remove existing notices
-			$('.registration-reports-notice').remove();
-			
-			// Create new notice
-			var noticeClass = type === 'error' ? 'notice-error' : 'notice-success';
-			var notice = $('<div class="notice ' + noticeClass + ' registration-reports-notice"><p>' + message + '</p></div>');
-			
-			// Insert after the page title
-			$('.wrap h1').after(notice);
-			
-			// Auto-hide after 5 seconds
-			setTimeout(function() {
-				notice.fadeOut(function() {
-					$(this).remove();
-				});
-			}, 5000);
-		}
+	// Function to show notices
+	function showNotice(message, type) {
+		// Clear the notice container
+		$('#rr-notice-container').empty();
+		
+		// Create new notice with custom class to prevent WordPress from moving it
+		var styleClass = type === 'error' ? 'rr-notice-error' : 'rr-notice-success';
+		var notice = $('<div class="rr-notice ' + styleClass + '"><p>' + message + '</p></div>');
+		
+		// Insert into the dedicated notice container
+		$('#rr-notice-container').html(notice);
+		
+		// Auto-hide after 5 seconds
+		setTimeout(function() {
+			notice.fadeOut(function() {
+				$(this).remove();
+			});
+		}, 5000);
+	}
 		
 	});
 
